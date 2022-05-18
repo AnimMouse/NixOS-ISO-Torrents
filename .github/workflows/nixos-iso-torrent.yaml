@@ -1,0 +1,76 @@
+name: NixOS ISO torrent creator
+on:
+  workflow_dispatch:
+  
+env:
+  nixos_version: 21.11
+  
+jobs:
+  torrent:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavor: [plasma5, gnome]
+        
+    steps:
+      - name: Get NixOS ISO latest URL and file name
+        id: nixos-iso
+        run: |
+          latest_url=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-${{ matrix.flavor }}-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
+          echo ::set-output name=latest-url::$latest_url
+          echo ::set-output name=filename::$(basename $latest_url)
+          
+      - name: Install torrenttools
+        run: |
+          sudo add-apt-repository ppa:fbdtemme/torrenttools
+          sudo apt-get update
+          sudo apt-get install torrenttools
+          
+      - name: Download NixOS ISO
+        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.latest-url }}"
+        
+      - name: Create NixOS ISO torrent
+        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.latest-url }}" -c "$(basename ${{ steps.nixos-iso.outputs.filename }} .iso) torrent by AnimMouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
+        
+      - name: Upload NixOS ISO torrent
+        uses: actions/upload-artifact@v3
+        with:
+          name: NixOS ${{ matrix.flavor }} ISO
+          path: ${{ steps.nixos-iso.outputs.filename }}.torrent
+          
+  release:
+    needs: torrent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NixOS plasma5 ISO
+        uses: actions/download-artifact@v3
+        with:
+          name: NixOS plasma5 ISO
+          
+      - name: Download NixOS gnome ISO
+        uses: actions/download-artifact@v3
+        with:
+          name: NixOS gnome ISO
+          
+      - name: Get NixOS ISO info
+        id: nixos-info
+        run: |
+          plasma5=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-plasma5-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
+          gnome=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-gnome-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
+          echo ::set-output name=plasma5-filename::$(basename $plasma5)
+          echo ::set-output name=gnome-filename::$(basename $gnome)
+          url=$(curl https://channels.nixos.org/nixos-$nixos_version -s -L -I -o /dev/null -w '%{url_effective}')
+          info=$(basename $url)
+          echo ::set-output name=info::$info
+          echo ::set-output name=version::${info#"nixos-"}
+          
+      - name: Release NixOS ISO torrent
+        uses: softprops/action-gh-release@v1
+        with:
+          name: NixOS ${{ steps.nixos-info.outputs.version }}
+          tag_name: v${{ steps.nixos-info.outputs.version }}
+          body: |
+            ${{ steps.nixos-info.outputs.info }}
+          files: |
+            ${{ steps.nixos-info.outputs.plasma5-filename }}.torrent
+            ${{ steps.nixos-info.outputs.gnome-filename }}.torrent

@@ -1,5 +1,7 @@
 name: NixOS ISO torrent creator
 on:
+  schedule:
+    - cron: '0 0 * * 0'
   workflow_dispatch:
   
 env:
@@ -30,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flavor: [plasma5, gnome]
+        flavor: [plasma5, gnome, minimal]
         
     steps:
       - name: Get NixOS ISO latest URL and file name
@@ -72,13 +74,20 @@ jobs:
         with:
           name: NixOS gnome ISO
           
+      - name: Download NixOS minimal ISO
+        uses: actions/download-artifact@v3
+        with:
+          name: NixOS minimal ISO
+          
       - name: Get NixOS ISO file name
         id: nixos-iso-filename
         run: |
           plasma5=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-plasma5-x86_64-linux.iso)
           gnome=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-gnome-x86_64-linux.iso)
+          minimal=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-minimal-x86_64-linux.iso)
           echo ::set-output name=plasma5::$(basename $plasma5)
           echo ::set-output name=gnome::$(basename $gnome)
+          echo ::set-output name=minimal::$(basename $minimal)
           
       - name: Release NixOS ISO torrent
         uses: softprops/action-gh-release@v1
@@ -90,3 +99,4 @@ jobs:
           files: |
             ${{ steps.nixos-iso-filename.outputs.plasma5 }}.torrent
             ${{ steps.nixos-iso-filename.outputs.gnome }}.torrent
+            ${{ steps.nixos-iso-filename.outputs.minimal }}.torrent

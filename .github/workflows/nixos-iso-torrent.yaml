@@ -11,7 +11,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Get NixOS info
+      - name: Get NixOS info and version
         id: nixos-info
         run: |
           url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version)
@@ -38,9 +38,8 @@ jobs:
       - name: Get NixOS ISO latest URL and file name
         id: nixos-iso
         run: |
-          latest_url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-${{ matrix.flavor }}-x86_64-linux.iso)
-          echo ::set-output name=latest-url::$latest_url
-          echo ::set-output name=filename::$(basename $latest_url)
+          echo ::set-output name=url::https://releases.nixos.org/nixos/$nixos_version/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso
+          echo ::set-output name=filename::nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso
           
       - name: Install torrenttools
         run: |
@@ -49,47 +48,25 @@ jobs:
           sudo apt-get install torrenttools
           
       - name: Download NixOS ISO
-        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.latest-url }}"
+        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}"
         
       - name: Create NixOS ISO torrent
-        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.latest-url }}" -c "$(basename ${{ steps.nixos-iso.outputs.filename }} .iso) torrent by AnimMouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
+        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}" -c "NixOS ${{ matrix.flavor }} ${{ needs.check.outputs.latest-version }} torrent by AnimMouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Upload NixOS ISO torrent
         uses: actions/upload-artifact@v3
         with:
-          name: NixOS ${{ matrix.flavor }} ISO
+          name: NixOS ${{ matrix.flavor }}
           path: ${{ steps.nixos-iso.outputs.filename }}.torrent
           
   release:
     needs: [check, torrent]
     runs-on: ubuntu-latest
     steps:
-      - name: Download NixOS plasma5 ISO
+      - name: Download NixOS ISO torrents
         uses: actions/download-artifact@v3
-        with:
-          name: NixOS plasma5 ISO
-          
-      - name: Download NixOS gnome ISO
-        uses: actions/download-artifact@v3
-        with:
-          name: NixOS gnome ISO
-          
-      - name: Download NixOS minimal ISO
-        uses: actions/download-artifact@v3
-        with:
-          name: NixOS minimal ISO
-          
-      - name: Get NixOS ISO file name
-        id: nixos-iso-filename
-        run: |
-          plasma5=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-plasma5-x86_64-linux.iso)
-          gnome=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-gnome-x86_64-linux.iso)
-          minimal=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-minimal-x86_64-linux.iso)
-          echo ::set-output name=plasma5::$(basename $plasma5)
-          echo ::set-output name=gnome::$(basename $gnome)
-          echo ::set-output name=minimal::$(basename $minimal)
-          
-      - name: Release NixOS ISO torrent
+        
+      - name: Release NixOS ISO torrents
         uses: softprops/action-gh-release@v1
         with:
           name: NixOS ${{ needs.check.outputs.latest-version }}
@@ -97,6 +74,6 @@ jobs:
           body: |
             ${{ needs.check.outputs.info }}
           files: |
-            ${{ steps.nixos-iso-filename.outputs.plasma5 }}.torrent
-            ${{ steps.nixos-iso-filename.outputs.gnome }}.torrent
-            ${{ steps.nixos-iso-filename.outputs.minimal }}.torrent
+            NixOS plasma5/nixos-plasma5-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent
+            NixOS gnome/nixos-gnome-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent
+            NixOS minimal/nixos-minimal-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent

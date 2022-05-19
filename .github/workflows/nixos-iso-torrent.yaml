@@ -6,7 +6,27 @@ env:
   nixos_version: 21.11
   
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get NixOS info
+        id: nixos-info
+        run: |
+          url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version)
+          info=$(basename $url)
+          echo ::set-output name=info::$info
+          echo ::set-output name=latest-version::${info#nixos-}
+          echo ::set-output name=current-version::$(curl -s $GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/latest | jq -r .tag_name)
+          
+      - name: Check if there is newer version
+        run: '[ v${{ steps.nixos-info.outputs.latest-version }} != ${{ steps.nixos-info.outputs.current-version }} ]'
+        
+    outputs:
+      info: ${{ steps.nixos-info.outputs.info }}
+      latest-version: ${{ steps.nixos-info.outputs.latest-version }}
+      
   torrent:
+    needs: check
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,7 +36,7 @@ jobs:
       - name: Get NixOS ISO latest URL and file name
         id: nixos-iso
         run: |
-          latest_url=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-${{ matrix.flavor }}-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
+          latest_url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-${{ matrix.flavor }}-x86_64-linux.iso)
           echo ::set-output name=latest-url::$latest_url
           echo ::set-output name=filename::$(basename $latest_url)
           
@@ -39,7 +59,7 @@ jobs:
           path: ${{ steps.nixos-iso.outputs.filename }}.torrent
           
   release:
-    needs: torrent
+    needs: [check, torrent]
     runs-on: ubuntu-latest
     steps:
       - name: Download NixOS plasma5 ISO
@@ -52,25 +72,21 @@ jobs:
         with:
           name: NixOS gnome ISO
           
-      - name: Get NixOS ISO info
-        id: nixos-info
+      - name: Get NixOS ISO file name
+        id: nixos-iso-filename
         run: |
-          plasma5=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-plasma5-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
-          gnome=$(curl https://channels.nixos.org/nixos-$nixos_version/latest-nixos-gnome-x86_64-linux.iso -s -L -I -o /dev/null -w '%{url_effective}')
-          echo ::set-output name=plasma5-filename::$(basename $plasma5)
-          echo ::set-output name=gnome-filename::$(basename $gnome)
-          url=$(curl https://channels.nixos.org/nixos-$nixos_version -s -L -I -o /dev/null -w '%{url_effective}')
-          info=$(basename $url)
-          echo ::set-output name=info::$info
-          echo ::set-output name=version::${info#"nixos-"}
+          plasma5=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-plasma5-x86_64-linux.iso)
+          gnome=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version/latest-nixos-gnome-x86_64-linux.iso)
+          echo ::set-output name=plasma5::$(basename $plasma5)
+          echo ::set-output name=gnome::$(basename $gnome)
           
       - name: Release NixOS ISO torrent
         uses: softprops/action-gh-release@v1
         with:
-          name: NixOS ${{ steps.nixos-info.outputs.version }}
-          tag_name: v${{ steps.nixos-info.outputs.version }}
+          name: NixOS ${{ needs.check.outputs.latest-version }}
+          tag_name: v${{ needs.check.outputs.latest-version }}
           body: |
-            ${{ steps.nixos-info.outputs.info }}
+            ${{ needs.check.outputs.info }}
           files: |
-            ${{ steps.nixos-info.outputs.plasma5-filename }}.torrent
-            ${{ steps.nixos-info.outputs.gnome-filename }}.torrent
+            ${{ steps.nixos-iso-filename.outputs.plasma5 }}.torrent
+            ${{ steps.nixos-iso-filename.outputs.gnome }}.torrent

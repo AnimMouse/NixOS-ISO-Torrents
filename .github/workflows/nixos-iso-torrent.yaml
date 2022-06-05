@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   
 env:
-  nixos_version: 21.11
+  nixos_version: 22.05
   
 jobs:
   check:

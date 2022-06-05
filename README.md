@@ -12,3 +12,12 @@ Webseeded by NixOS's servers.
 #### Schedule
 
 Weekly
+
+#### Supported versions
+
+| NixOS   | x86_64 | i686 | aarch64 |
+|---------|--------|------|---------|
+| gnome   | ✔️     | N/A  | N/A     |
+| plasma5 | ✔️     | N/A  | N/A     |
+| minimal | ✔️     | ✔️   | ✔️      |
+| small   | TBD    | N/A  | N/A     |

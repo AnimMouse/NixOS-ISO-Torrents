@@ -1,5 +1,5 @@
 # NixOS ISO Torrents
-NixOS ISO torrent creator using GitHub Actions.
+NixOS ISO torrent creator using [GitHub Actions](https://github.com/features/actions).
 
 [Downloads](https://github.com/AnimMouse/NixOS-ISO-Torrents/releases)
 
@@ -9,9 +9,17 @@ Can be paused because it is a torrent.
 
 Webseeded by NixOS's servers.
 
+### Create a fresh torrent
+
+If the torrents here are outdated before the scheduled action takes place, star this repository in order to create a new torrent.
+
 #### Schedule
 
-Weekly
+At 11:07 on Sunday weekly.
+
+#### aarch64
+
+aarch64 are located in pre-releases.
 
 #### Supported versions
 

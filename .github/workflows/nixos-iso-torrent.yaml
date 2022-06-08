@@ -1,9 +1,11 @@
 name: NixOS ISO torrent creator
 on:
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '7 11 * * 0'
   workflow_dispatch:
-  
+  watch:
+    types: [started]
+    
 env:
   nixos_version: 22.05
   

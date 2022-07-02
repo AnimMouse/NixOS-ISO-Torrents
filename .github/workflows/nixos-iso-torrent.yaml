@@ -74,14 +74,13 @@ jobs:
         uses: actions/download-artifact@v3
         
       - name: Release NixOS ISO torrents
-        uses: softprops/action-gh-release@v1
-        with:
-          name: NixOS ${{ needs.check.outputs.latest-version }}
-          tag_name: v${{ needs.check.outputs.latest-version }}
-          body: |
-            ${{ needs.check.outputs.info }}
-          files: |
-            NixOS plasma5 x86_64/nixos-plasma5-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent
-            NixOS gnome x86_64/nixos-gnome-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent
-            NixOS minimal x86_64/nixos-minimal-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent
-            NixOS minimal i686/nixos-minimal-${{ needs.check.outputs.latest-version }}-i686-linux.iso.torrent
+        run: |
+          gh release create "v${{ needs.check.outputs.latest-version }}" \
+          "NixOS plasma5 x86_64/nixos-plasma5-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent" \
+          "NixOS gnome x86_64/nixos-gnome-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent" \
+          "NixOS minimal x86_64/nixos-minimal-${{ needs.check.outputs.latest-version }}-x86_64-linux.iso.torrent" \
+          "NixOS minimal i686/nixos-minimal-${{ needs.check.outputs.latest-version }}-i686-linux.iso.torrent" \
+          -n "${{ needs.check.outputs.info }}" -t "NixOS ${{ needs.check.outputs.latest-version }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

@@ -64,12 +64,10 @@ jobs:
         uses: actions/download-artifact@v3
         
       - name: Release NixOS ISO torrents
-        uses: softprops/action-gh-release@v1
-        with:
-          name: NixOS ${{ needs.check.outputs.latest-version }} aarch64
-          tag_name: v${{ needs.check.outputs.latest-version }}-aarch64
-          prerelease: true
-          body: |
-            ${{ needs.check.outputs.info }} aarch64
-          files: |
-            NixOS minimal aarch64/nixos-minimal-${{ needs.check.outputs.latest-version }}-aarch64-linux.iso.torrent
+        run: |
+          gh release create "v${{ needs.check.outputs.latest-version }}-aarch64" \
+          "NixOS minimal aarch64/nixos-minimal-${{ needs.check.outputs.latest-version }}-aarch64-linux.iso.torrent" \
+          -n "${{ needs.check.outputs.info }} aarch64" -p -t "NixOS ${{ needs.check.outputs.latest-version }} aarch64"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

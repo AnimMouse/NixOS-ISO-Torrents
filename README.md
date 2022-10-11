@@ -29,3 +29,4 @@ aarch64 are located in pre-releases.
 | plasma5 | ✔️     | N/A  | N/A     |
 | minimal | ✔️     | ✔️   | ✔️      |
 | small   | TBD    | N/A  | N/A     |
+| OVA     | TBD    | N/A  | N/A     |

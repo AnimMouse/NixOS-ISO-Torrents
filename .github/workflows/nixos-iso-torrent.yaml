@@ -18,9 +18,9 @@ jobs:
         run: |
           url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$nixos_version)
           info=$(basename $url)
-          echo ::set-output name=info::$info
-          echo ::set-output name=latest-version::${info#nixos-}
-          echo ::set-output name=current-version::$(curl -s $GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/latest | jq -r .tag_name)
+          echo info=$info >> $GITHUB_OUTPUT
+          echo latest-version=${info#nixos-} >> $GITHUB_OUTPUT
+          echo current-version=$(curl -s $GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/latest | jq -r .tag_name) >> $GITHUB_OUTPUT
           
       - name: Check if there is newer version
         run: '[ v${{ steps.nixos-info.outputs.latest-version }} != ${{ steps.nixos-info.outputs.current-version }} ]'
@@ -46,13 +46,13 @@ jobs:
       - name: Get NixOS ISO URL and file name
         id: nixos-iso
         run: |
-          echo ::set-output name=url::https://releases.nixos.org/nixos/$nixos_version/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-${{ matrix.architecture }}-linux.iso
-          echo ::set-output name=filename::nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-${{ matrix.architecture }}-linux.iso
+          echo url=https://releases.nixos.org/nixos/$nixos_version/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+          echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.latest-version }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
           
       - name: Install torrenttools
         run: |
           sudo add-apt-repository -y ppa:fbdtemme/torrenttools
-          sudo apt-get -qq -y install torrenttools
+          sudo apt-get -qq install torrenttools
           
       - name: Download NixOS ISO
         run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}"

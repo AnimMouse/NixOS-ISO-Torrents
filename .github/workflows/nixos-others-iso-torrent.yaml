@@ -39,10 +39,11 @@ jobs:
           echo url=https://releases.nixos.org/nixos/$nixos_version-aarch64/${{ needs.check.outputs.info }}/nixos-minimal-${{ needs.check.outputs.latest-version }}-aarch64-linux.iso >> $GITHUB_OUTPUT
           echo filename=nixos-minimal-${{ needs.check.outputs.latest-version }}-aarch64-linux.iso >> $GITHUB_OUTPUT
           
-      - name: Install torrenttools
-        run: |
-          sudo add-apt-repository -y ppa:fbdtemme/torrenttools
-          sudo apt-get -qq install torrenttools
+      - name: Setup torrenttools
+        uses: AnimMouse/setup-appimage@v1
+        with:
+          name: torrenttools
+          url: https://github.com/fbdtemme/torrenttools/releases/download/v0.6.2/torrenttools-0.6.2-linux-x86_64.AppImage
           
       - name: Download NixOS ISO
         run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}"

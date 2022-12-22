@@ -1,0 +1,84 @@
+name: NixOS small ISO torrent creator
+on:
+  schedule:
+    - cron: '7 11 * * 0'
+  workflow_dispatch:
+  watch:
+    types: [started]
+    
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get NixOS small version, info, and latest commit
+        id: nixos-info
+        run: |
+          version=$(curl -s https://endoflife.date/api/nixos.json | jq -r .[0].latest)
+          url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$version-small)
+          info=$(basename $url)
+          echo version=$version >> $GITHUB_OUTPUT
+          echo info=$info >> $GITHUB_OUTPUT
+          echo version-git-sha=${info#nixos-} >> $GITHUB_OUTPUT
+          
+      - name: Get NixOS small current commit
+        id: nixos-current
+        run: echo version-git-sha=$(gh api repos/$GITHUB_REPOSITORY/releases -q 'map(select(.prerelease)) | .[0].tag_name') >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          
+      - name: Check if there is newer commit
+        run: '[ v${{ steps.nixos-info.outputs.version-git-sha }}-small != ${{ steps.nixos-current.outputs.version-git-sha }} ]'
+        
+    outputs:
+      version: ${{ steps.nixos-info.outputs.version }}
+      info: ${{ steps.nixos-info.outputs.info }}
+      version-git-sha: ${{ steps.nixos-info.outputs.version-git-sha }}
+      
+  torrent:
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [x86_64, aarch64]
+        
+    steps:
+      - name: Get NixOS small ISO URL and file name
+        id: nixos-iso
+        run: |
+          echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}-small/${{ needs.check.outputs.info }}/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+          echo filename=nixos-minimal-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+          
+      - name: Setup torrenttools
+        uses: AnimMouse/setup-appimage@v1
+        with:
+          name: torrenttools
+          url: https://github.com/fbdtemme/torrenttools/releases/download/v0.6.2/torrenttools-0.6.2-linux-x86_64.AppImage
+          
+      - name: Download NixOS ISO
+        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}"
+        
+      - name: Create NixOS ISO torrent
+        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}" -c "NixOS small minimal ${{ matrix.architecture }} ${{ needs.check.outputs.version-git-sha }} torrent by AnimMouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
+        
+      - name: Upload NixOS ISO torrent
+        uses: actions/upload-artifact@v3
+        with:
+          name: NixOS small minimal ${{ matrix.architecture }}
+          path: ${{ steps.nixos-iso.outputs.filename }}.torrent
+          
+  release:
+    needs: [check, torrent]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NixOS ISO torrents
+        uses: actions/download-artifact@v3
+        
+      - name: Release NixOS ISO torrents
+        run: >
+          gh release create "v${{ needs.check.outputs.version-git-sha }}-small"
+          "NixOS small minimal x86_64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.torrent"
+          "NixOS small minimal aarch64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
+          -n "${{ needs.check.outputs.info }} small" -p -t "NixOS small ${{ needs.check.outputs.version-git-sha }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

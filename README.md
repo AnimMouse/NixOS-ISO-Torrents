@@ -17,16 +17,16 @@ If the torrents here are outdated before the scheduled action takes place, star 
 
 At 11:07 on Sunday weekly.
 
-#### aarch64
+#### Small
 
-aarch64 are located in pre-releases.
+NixOS small are located in pre-releases.
 
 #### Supported versions
 
 | NixOS   | x86_64 | i686 | aarch64 |
 |---------|--------|------|---------|
-| gnome   | ✔️     | N/A  | N/A     |
-| plasma5 | ✔️     | N/A  | N/A     |
+| gnome   | ✔️     | N/A  | ✔️      |
+| plasma5 | ✔️     | N/A  | ✔️      |
 | minimal | ✔️     | ✔️   | ✔️      |
-| small   | TBD    | N/A  | N/A     |
+| small   | ✔️     | N/A  | ✔️      |
 | OVA     | TBD    | N/A  | N/A     |

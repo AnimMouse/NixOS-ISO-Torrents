@@ -39,20 +39,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flavor: [plasma5, gnome, minimal]
+        flavor: [plasma5, gnome, minimal, ova]
         architecture: [x86_64, aarch64, i686]
         exclude:
           - flavor: plasma5
             architecture: i686
           - flavor: gnome
             architecture: i686
+          - flavor: ova
+            architecture: i686
+          - flavor: ova
+            architecture: aarch64
             
     steps:
       - name: Get NixOS ISO URL and file name
         id: nixos-iso
         run: |
-          echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
-          echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+          if [ ${{ matrix.flavor }} == ova ]
+          then
+            echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
+            echo filename=nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
+          else
+            echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+            echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
+          fi
           
       - name: Setup torrenttools
         uses: AnimMouse/setup-appimage@v1
@@ -89,6 +99,7 @@ jobs:
           "NixOS gnome aarch64/nixos-gnome-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
           "NixOS minimal aarch64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
           "NixOS minimal i686/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-i686-linux.iso.torrent"
+          "NixOS ova x86_64/nixos-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.ova.torrent"
           -n "${{ needs.check.outputs.info }}" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -29,4 +29,4 @@ NixOS small are located in pre-releases.
 | plasma5 | ✔️     | N/A  | ✔️      |
 | minimal | ✔️     | ✔️   | ✔️      |
 | small   | ✔️     | N/A  | ✔️      |
-| OVA     | TBD    | N/A  | N/A     |
+| OVA     | ✔     | N/A  | N/A     |

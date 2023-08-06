@@ -1,4 +1,5 @@
 # NixOS ISO Torrents
+
 NixOS ISO torrent creator using [GitHub Actions](https://github.com/features/actions).
 
 [Downloads](https://github.com/AnimMouse/NixOS-ISO-Torrents/releases)
@@ -29,4 +30,4 @@ NixOS small are located in pre-releases.
 | plasma5 | ✔️     | N/A  | ✔️      |
 | minimal | ✔️     | ✔️   | ✔️      |
 | small   | ✔️     | N/A  | ✔️      |
-| OVA     | ✔     | N/A  | N/A     |
+| OVA     | ✔️     | N/A  | N/A     |

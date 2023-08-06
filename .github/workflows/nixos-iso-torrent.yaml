@@ -27,7 +27,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           
       - name: Check if there is newer commit
-        run: '[ v${{ steps.nixos-info.outputs.version-git-sha }} != ${{ steps.nixos-current.outputs.version-git-sha }} ]'
+        run: '[[ v${{ steps.nixos-info.outputs.version-git-sha }} != ${{ steps.nixos-current.outputs.version-git-sha }} ]]'
         
     outputs:
       version: ${{ steps.nixos-info.outputs.version }}
@@ -55,7 +55,7 @@ jobs:
       - name: Get NixOS ISO URL and file name
         id: nixos-iso
         run: |
-          if [ ${{ matrix.flavor }} == ova ]
+          if [[ ${{ matrix.flavor }} == ova ]]
           then
             echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
             echo filename=nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT

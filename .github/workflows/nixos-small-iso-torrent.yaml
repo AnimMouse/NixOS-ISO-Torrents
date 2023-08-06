@@ -27,7 +27,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           
       - name: Check if there is newer commit
-        run: '[ v${{ steps.nixos-info.outputs.version-git-sha }}-small != ${{ steps.nixos-current.outputs.version-git-sha }} ]'
+        run: '[[ v${{ steps.nixos-info.outputs.version-git-sha }}-small != ${{ steps.nixos-current.outputs.version-git-sha }} ]]'
         
     outputs:
       version: ${{ steps.nixos-info.outputs.version }}

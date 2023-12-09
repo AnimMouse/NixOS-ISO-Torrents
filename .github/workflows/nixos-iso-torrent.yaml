@@ -10,15 +10,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Get NixOS version, info, and latest commit
+      - name: Get NixOS version, and latest commit
         id: nixos-info
         run: |
-          version=$(curl -s https://endoflife.date/api/nixos.json | jq -r .[0].latest)
-          url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/nixos-$version)
-          info=$(basename $url)
-          echo version=$version >> $GITHUB_OUTPUT
-          echo info=$info >> $GITHUB_OUTPUT
-          echo version-git-sha=${info#nixos-} >> $GITHUB_OUTPUT
+          version=$(curl -s https://cdn.jsdelivr.net/gh/NixOS/nixos-homepage/flake.lock | jq -r '.nodes."released-nixpkgs-stable".original.ref')
+          url=$(curl -sLI -o /dev/null -w %{url_effective} https://channels.nixos.org/$version)
+          version_git_sha=$(basename $url)
+          echo version=${version#nixos-} >> $GITHUB_OUTPUT
+          echo version-git-sha=${version_git_sha#nixos-} >> $GITHUB_OUTPUT
           
       - name: Get NixOS current commit
         id: nixos-current
@@ -31,7 +30,6 @@ jobs:
         
     outputs:
       version: ${{ steps.nixos-info.outputs.version }}
-      info: ${{ steps.nixos-info.outputs.info }}
       version-git-sha: ${{ steps.nixos-info.outputs.version-git-sha }}
       
   torrent:
@@ -55,12 +53,11 @@ jobs:
       - name: Get NixOS ISO URL and file name
         id: nixos-iso
         run: |
+          echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }} >> $GITHUB_OUTPUT
           if [[ ${{ matrix.flavor }} == ova ]]
           then
-            echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
             echo filename=nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
           else
-            echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/${{ needs.check.outputs.info }}/nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
             echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
           fi
           
@@ -71,10 +68,10 @@ jobs:
           url: https://github.com/fbdtemme/torrenttools/releases/download/v0.6.2/torrenttools-0.6.2-linux-x86_64.AppImage
           
       - name: Download NixOS ISO
-        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}"
+        run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Create NixOS ISO torrent
-        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}" -c "NixOS ${{ matrix.flavor }} ${{ matrix.architecture }} ${{ needs.check.outputs.version-git-sha }} torrent by AnimMouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
+        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}" -c "NixOS ${{ matrix.flavor }} ${{ matrix.architecture }} ${{ needs.check.outputs.version-git-sha }} torrent by Anim Mouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Upload NixOS ISO torrent
         uses: actions/upload-artifact@v3
@@ -100,7 +97,7 @@ jobs:
           "NixOS minimal aarch64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
           "NixOS minimal i686/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-i686-linux.iso.torrent"
           "NixOS ova x86_64/nixos-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.ova.torrent"
-          -n "${{ needs.check.outputs.info }}" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
+          -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

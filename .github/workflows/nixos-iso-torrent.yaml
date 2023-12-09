@@ -71,7 +71,7 @@ jobs:
         run: aria2c -x 16 "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Create NixOS ISO torrent
-        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}" -c "NixOS ${{ matrix.flavor }} ${{ matrix.architecture }} ${{ needs.check.outputs.version-git-sha }} torrent by Anim Mouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
+        run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}" -c "NixOS ${{ matrix.flavor }} ${{ needs.check.outputs.version-git-sha }} ${{ matrix.architecture }} torrent by Anim Mouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Upload NixOS ISO torrent
         uses: actions/upload-artifact@v3

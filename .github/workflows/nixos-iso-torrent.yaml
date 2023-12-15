@@ -74,7 +74,7 @@ jobs:
         run: torrenttools create -o "${{ steps.nixos-iso.outputs.filename }}.torrent" -w "${{ steps.nixos-iso.outputs.url }}/${{ steps.nixos-iso.outputs.filename }}" -c "NixOS ${{ matrix.flavor }} ${{ needs.check.outputs.version-git-sha }} ${{ matrix.architecture }} torrent by Anim Mouse" -s nixos-iso-torrents "${{ steps.nixos-iso.outputs.filename }}"
         
       - name: Upload NixOS ISO torrent
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: NixOS ${{ matrix.flavor }} ${{ matrix.architecture }}
           path: ${{ steps.nixos-iso.outputs.filename }}.torrent

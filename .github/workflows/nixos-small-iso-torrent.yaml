@@ -63,6 +63,8 @@ jobs:
         with:
           name: NixOS small minimal ${{ matrix.architecture }}
           path: ${{ steps.nixos-iso.outputs.filename }}.torrent
+          retention-days: 1
+          compression-level: 0
           
   release:
     needs: [check, torrent]

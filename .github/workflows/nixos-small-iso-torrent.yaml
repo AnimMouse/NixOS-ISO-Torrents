@@ -6,6 +6,9 @@ on:
   watch:
     types: [started]
     
+concurrency:
+  group: ${{ github.workflow }}
+  
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -26,7 +29,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           
       - name: Check if there is newer commit
-        run: '[[ v${{ steps.nixos-info.outputs.version-git-sha }}-small != ${{ steps.nixos-current.outputs.version-git-sha }} ]]'
+        run: '[[ "v${{ steps.nixos-info.outputs.version-git-sha }}-small" != "${{ steps.nixos-current.outputs.version-git-sha }}" ]]'
         
     outputs:
       version: ${{ steps.nixos-info.outputs.version }}
@@ -72,12 +75,14 @@ jobs:
     steps:
       - name: Download NixOS ISO torrents
         uses: actions/download-artifact@v4
-        
+        with:
+          merge-multiple: true
+          
       - name: Release NixOS ISO torrents
         run: >
           gh release create "v${{ needs.check.outputs.version-git-sha }}-small"
-          "NixOS small minimal x86_64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.torrent"
-          "NixOS small minimal aarch64/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
+          "nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.torrent"
+          "nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
           -n "NixOS small ${{ needs.check.outputs.version-git-sha }} torrents" -p -t "NixOS small ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}

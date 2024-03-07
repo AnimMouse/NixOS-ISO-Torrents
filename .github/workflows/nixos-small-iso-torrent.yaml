@@ -81,8 +81,7 @@ jobs:
       - name: Release NixOS ISO torrents
         run: >
           gh release create "v${{ needs.check.outputs.version-git-sha }}-small"
-          "nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.torrent"
-          "nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.torrent"
+          nixos-minimal-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent
           -n "NixOS small ${{ needs.check.outputs.version-git-sha }} torrents" -p -t "NixOS small ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}

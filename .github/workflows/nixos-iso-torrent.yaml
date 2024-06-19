@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flavor: [plasma5, gnome, minimal, ova]
+        flavor: [plasma6, gnome, minimal, ova]
         architecture: [x86_64, aarch64, i686]
         exclude:
-          - flavor: plasma5
+          - flavor: plasma6
             architecture: i686
           - flavor: gnome
             architecture: i686
@@ -96,7 +96,7 @@ jobs:
       - name: Release NixOS ISO torrents
         run: >
           gh release create "v${{ needs.check.outputs.version-git-sha }}"
-          nixos-{plasma5,gnome,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent
+          nixos-{plasma6,gnome,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent
           nixos-minimal-${{ needs.check.outputs.version-git-sha }}-i686-linux.iso.torrent
           nixos-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.ova.torrent
           -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"

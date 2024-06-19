@@ -41,14 +41,8 @@ jobs:
     strategy:
       matrix:
         flavor: [plasma6, gnome, minimal, ova]
-        architecture: [x86_64, aarch64, i686]
+        architecture: [x86_64, aarch64]
         exclude:
-          - flavor: plasma6
-            architecture: i686
-          - flavor: gnome
-            architecture: i686
-          - flavor: ova
-            architecture: i686
           - flavor: ova
             architecture: aarch64
             
@@ -97,7 +91,6 @@ jobs:
         run: >
           gh release create "v${{ needs.check.outputs.version-git-sha }}"
           nixos-{plasma6,gnome,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent
-          nixos-minimal-${{ needs.check.outputs.version-git-sha }}-i686-linux.iso.torrent
           nixos-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.ova.torrent
           -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
         env:

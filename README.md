@@ -16,7 +16,7 @@ If the torrents here are outdated before the scheduled action takes place, star 
 
 #### Schedule
 
-At 11:07 on Sunday weekly.
+At 11:07 UTC on Sunday weekly.
 
 #### Small
 
@@ -24,10 +24,10 @@ NixOS small are located in pre-releases.
 
 #### Supported versions
 
-| NixOS   | x86_64 | i686 | aarch64 |
-|---------|--------|------|---------|
-| gnome   | ✔️     | N/A  | ✔️      |
-| plasma5 | ✔️     | N/A  | ✔️      |
-| minimal | ✔️     | ✔️   | ✔️      |
-| small   | ✔️     | N/A  | ✔️      |
-| OVA     | ✔️     | N/A  | N/A     |
+| NixOS   | x86_64 | aarch64 |
+|---------|--------|---------|
+| gnome   | ✔️     | ✔️      |
+| plasma  | ✔️     | ✔️      |
+| minimal | ✔️     | ✔️      |
+| small   | ✔️     | ✔️      |
+| OVA     | ✔️     | N/A     |

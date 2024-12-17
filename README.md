@@ -18,10 +18,6 @@ If the torrents here are outdated before the scheduled action takes place, star 
 
 At 11:07 UTC on Sunday weekly.
 
-#### Small
-
-NixOS small are located in pre-releases.
-
 #### Supported versions
 
 | NixOS   | x86_64 | aarch64 |
@@ -29,5 +25,3 @@ NixOS small are located in pre-releases.
 | gnome   | ✔️     | ✔️      |
 | plasma  | ✔️     | ✔️      |
 | minimal | ✔️     | ✔️      |
-| small   | ✔️     | ✔️      |
-| OVA     | ✔️     | N/A     |

@@ -40,23 +40,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flavor: [plasma6, gnome, minimal, ova]
+        flavor: [plasma6, gnome, minimal]
         architecture: [x86_64, aarch64]
-        exclude:
-          - flavor: ova
-            architecture: aarch64
-            
+        
     steps:
       - name: Get NixOS ISO URL and file name
         id: nixos-iso
         run: |
           echo url=https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }} >> $GITHUB_OUTPUT
-          if [[ ${{ matrix.flavor }} == ova ]]
-          then
-            echo filename=nixos-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.ova >> $GITHUB_OUTPUT
-          else
-            echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
-          fi
+          echo filename=nixos-${{ matrix.flavor }}-${{ needs.check.outputs.version-git-sha }}-${{ matrix.architecture }}-linux.iso >> $GITHUB_OUTPUT
           
       - name: Setup torrenttools
         uses: AnimMouse/setup-appimage@v1
@@ -91,7 +83,6 @@ jobs:
         run: >
           gh release create "v${{ needs.check.outputs.version-git-sha }}"
           nixos-{plasma6,gnome,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent
-          nixos-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.ova.torrent
           -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents" -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}

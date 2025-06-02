@@ -20,8 +20,7 @@ At 11:07 UTC on Sunday weekly.
 
 #### Supported versions
 
-| NixOS   | x86_64 | aarch64 |
-|---------|--------|---------|
-| gnome   | ✔️     | ✔️      |
-| plasma  | ✔️     | ✔️      |
-| minimal | ✔️     | ✔️      |
+| NixOS     | x86_64 | aarch64 |
+|-----------|--------|---------|
+| graphical | ✔️     | ✔️      |
+| minimal   | ✔️     | ✔️      |

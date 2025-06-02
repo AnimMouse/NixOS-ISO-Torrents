@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flavor: [plasma6, gnome, minimal]
+        flavor: [graphical, minimal]
         architecture: [x86_64, aarch64]
         
     steps:
@@ -82,15 +82,9 @@ jobs:
       - name: Release NixOS ISO torrents
         run: |
           gh release create "v${{ needs.check.outputs.version-git-sha }}" \
-          nixos-{plasma6,gnome,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent \
+          nixos-{graphical,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent \
           -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents
-          SHA-256 hashes:
-          [nixos-plasma6-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-plasma6-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.sha256)
-          [nixos-gnome-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-gnome-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.sha256)
-          [nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-x86_64-linux.iso.sha256)
-          [nixos-plasma6-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-plasma6-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.sha256)
-          [nixos-gnome-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-gnome-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.sha256)
-          [nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }}/nixos-minimal-${{ needs.check.outputs.version-git-sha }}-aarch64-linux.iso.sha256)" \
+          [SHA-256 hashes](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }})" \
           -t "NixOS ${{ needs.check.outputs.version-git-sha }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -24,7 +24,12 @@ jobs:
           
       - name: Get NixOS current commit
         id: nixos-current
-        run: echo version-git-sha=$(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name) >> $GITHUB_OUTPUT
+        run: |
+          version_git_sha=$(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name 2>/dev/null || true)
+          if echo "$version_git_sha" | grep -q '{'; then
+            version_git_sha=""
+          fi
+          echo "version-git-sha=$version_git_sha" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ github.token }}
           
@@ -81,11 +86,101 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           merge-multiple: true
+
+      - name: Generate RSS feed
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
+
+          VERSION="${{ needs.check.outputs.version-git-sha }}"
+          REPO="${{ github.repository }}"
+          NOW="$(date -R)"
+
+          xml_escape() {
+            sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g'
+          }
+
+          current_item() {
+            local title="NixOS ${VERSION}"
+            local link="https://github.com/${REPO}/releases/tag/v${VERSION}"
+            local pubdate="${NOW}"
+            {
+              echo "    <item>"
+              echo "      <title>$(echo "$title" | xml_escape)</title>"
+              echo "      <link>$(echo "$link" | xml_escape)</link>"
+              echo "      <guid isPermaLink=\"true\">$(echo "$link" | xml_escape)</guid>"
+              echo "      <pubDate>${pubdate}</pubDate>"
+              echo "      <description>NixOS ${VERSION} torrents</description>"
+              for variant in graphical minimal; do
+                for arch in x86_64 aarch64; do
+                  local fname="nixos-${variant}-${VERSION}-${arch}-linux.iso.torrent"
+                  local furl="https://github.com/${REPO}/releases/download/v${VERSION}/${fname}"
+                  local fsize=0
+                  if [ -f "${fname}" ]; then
+                    fsize="$(stat -c%s "${fname}" 2>/dev/null || echo 0)"
+                  fi
+                  echo "      <enclosure url=\"$(echo "$furl" | xml_escape)\" length=\"${fsize}\" type=\"application/x-bittorrent\" />"
+                done
+              done
+              echo "    </item>"
+            }
+          }
+
+          previous_items() {
+            gh api "repos/${REPO}/releases?per_page=9" \
+              --jq '.[] | {tag: .tag_name, name: .name, url: .html_url, published: .published_at, assets: [.assets[] | select(.name | endswith(".torrent")) | {name, url: .browser_download_url, size}]}' \
+              --paginate=false | \
+            jq -c '.' | while IFS= read -r release; do
+              local_tag="$(echo "$release" | jq -r '.tag')"
+              local_title="$(echo "$release" | jq -r '.name // .tag')"
+              local_link="$(echo "$release" | jq -r '.url')"
+              local_pub="$(echo "$release" | jq -r '.published')"
+              # Convert ISO8601 to RFC822 for pubDate
+              local_pubdate="$(date -R -d "${local_pub}" 2>/dev/null || echo "${NOW}")"
+
+              echo "    <item>"
+              echo "      <title>$(echo "$local_title" | xml_escape)</title>"
+              echo "      <link>$(echo "$local_link" | xml_escape)</link>"
+              echo "      <guid isPermaLink=\"true\">$(echo "$local_link" | xml_escape)</guid>"
+              echo "      <pubDate>${local_pubdate}</pubDate>"
+              echo "      <description>$(echo "$local_title" | xml_escape) torrents</description>"
+
+              echo "$release" | jq -c '.assets[]' | while IFS= read -r asset; do
+                a_name="$(echo "$asset" | jq -r '.name')"
+                a_url="$(echo "$asset" | jq -r '.url')"
+                a_size="$(echo "$asset" | jq -r '.size')"
+                echo "      <enclosure url=\"$(echo "$a_url" | xml_escape)\" length=\"${a_size}\" type=\"application/x-bittorrent\" />"
+              done
+
+              echo "    </item>"
+            done
+          }
+
+          {
+            echo '<?xml version="1.0" encoding="UTF-8"?>'
+            echo '<rss version="2.0">'
+            echo '  <channel>'
+            echo '    <title>NixOS ISO Torrents</title>'
+            echo "    <link>https://github.com/${REPO}/releases</link>"
+            echo '    <description>NixOS ISO torrent releases</description>'
+            echo "    <lastBuildDate>${NOW}</lastBuildDate>"
+            current_item
+            previous_items
+            echo '  </channel>'
+            echo '</rss>'
+          } > nixos-torrents.rss
+
+          xmllint --noout nixos-torrents.rss
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           
       - name: Release NixOS ISO torrents
         run: |
           gh release create "v${{ needs.check.outputs.version-git-sha }}" \
           nixos-{graphical,minimal}-${{ needs.check.outputs.version-git-sha }}-{x86_64,aarch64}-linux.iso.torrent \
+          nixos-torrents.rss \
           -n "NixOS ${{ needs.check.outputs.version-git-sha }} torrents
           [SHA-256 hashes](https://releases.nixos.org/nixos/${{ needs.check.outputs.version }}/nixos-${{ needs.check.outputs.version-git-sha }})" \
           -t "NixOS ${{ needs.check.outputs.version-git-sha }}"

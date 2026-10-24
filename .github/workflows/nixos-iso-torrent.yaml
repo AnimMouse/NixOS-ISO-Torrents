@@ -74,7 +74,10 @@ jobs:
           cache_key: v0.6.2
 
       - name: Download NixOS ISO
-        run: aria2c -x 16 "$URL/$FILENAME" "$URL/$FILENAME.sha256"
+        run: |
+          # aria2c treats multiple URIs as mirrors of one file, so fetch the checksum separately
+          aria2c -x 16 "$URL/$FILENAME"
+          curl -fsSLO "$URL/$FILENAME.sha256"
 
       - name: Verify NixOS ISO
         run: sha256sum -c "$FILENAME.sha256"
